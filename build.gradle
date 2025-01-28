@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
-    // TODO add jacoco
+    id 'jacoco'
 }
 
 group 'com.example.helloworld'
@@ -27,6 +27,7 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport // report is always generated after tests run
 }
 
 shadowJar {
@@ -35,7 +36,35 @@ shadowJar {
     manifest {
         attributes 'Main-Class': mainClassName
     }
-    archiveName rootProject.name + '-' + rootProject.version + '.jar'
+    archiveFileName = rootProject.name + '-' + rootProject.version + '.jar'
+}
+tasks.startShadowScripts{
+    dependsOn tasks.shadowJar
+    dependsOn tasks.jar
+}
+
+tasks.distTar{
+    dependsOn tasks.shadowJar
+}
+tasks.startScripts{
+    dependsOn tasks.shadowJar
+}
+
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+}
+
+jacoco {
+    toolVersion = "0.8.12"
+    reportsDirectory = layout.buildDirectory.dir('customJacocoReportDir')
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
 }
 
 // TODO Specify Jacoco version
